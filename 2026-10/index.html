@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<title>Sangam &amp; Curve Scorecard</title>
+<style>
+/* Layout: report header → consolidated KPI strip → project scorecards side by side → channel chart + Oct targets → data notes */
+:root{
+  --navy:#204768; --navy-deep:#16324e; --gold:#EFCC25; --gold-deep:#b6910f; --red:#D82A30;
+  --bg:#f4f7fb; --surface:#ffffff; --surface-2:#f8fafd; --line:#e1e8f1;
+  --ink:#1c3654; --ink-2:#5f6f85; --ink-3:#8a97ab;
+  --track:#e6ecf4; --bar:#204768; --bar-target:#9fb3cb;
+  --good:#1f8a5b; --good-bg:#e3f4ec; --warn:#a86f00; --warn-bg:#fdf1d6; --bad:#c42a2f; --bad-bg:#fbe5e6;
+  --note-bg:#fdf6da; --note-line:#ecd98f; --note-ink:#6b571f;
+  --head-ink:#ffffff;
+  --font:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1a26; --surface:#162435; --surface-2:#1b2c40; --line:#2a3d54;
+  --ink:#e6edf6; --ink-2:#a9b7c9; --ink-3:#7f8fa5;
+  --track:#24374d; --bar:#7fa6d1; --bar-target:#4b6584; --gold-deep:#e2bd2a;
+  --good:#5cc995; --good-bg:#173829; --warn:#f0b84a; --warn-bg:#3a2e12; --bad:#ff7b7f; --bad-bg:#3d1c1f;
+  --note-bg:#2d2812; --note-line:#5c5022; --note-ink:#ecd98f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a26; --surface:#162435; --surface-2:#1b2c40; --line:#2a3d54;
+  --ink:#e6edf6; --ink-2:#a9b7c9; --ink-3:#7f8fa5;
+  --track:#24374d; --bar:#7fa6d1; --bar-target:#4b6584; --gold-deep:#e2bd2a;
+  --good:#5cc995; --good-bg:#173829; --warn:#f0b84a; --warn-bg:#3a2e12; --bad:#ff7b7f; --bad-bg:#3d1c1f;
+  --note-bg:#2d2812; --note-line:#5c5022; --note-ink:#ecd98f; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:22px}
+.num,td.n,.kpi-v{font-variant-numeric:tabular-nums}
+
+/* header band */
+.band{background:linear-gradient(135deg,#16324e,#204768,#1a3c5c);color:var(--head-ink);border-radius:14px;padding:22px 24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end;position:relative;overflow:hidden}
+.band::after{content:"";position:absolute;right:-60px;top:-80px;width:240px;height:240px;border-radius:50%;border:18px solid rgba(239,204,37,.18)}
+.band .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.band h1{margin:4px 0 2px;font-size:clamp(20px,3vw,28px);font-weight:700;text-wrap:balance}
+.band h1 span{color:var(--gold)}
+.band .sub{color:#c9d6e6;font-size:13px}
+.band .pills{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.pill{font-size:12px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);white-space:nowrap}
+.pill.g{background:var(--gold);color:#16324e;border-color:var(--gold);font-weight:600}
+
+h2{font-size:15px;margin:0 0 12px;font-weight:700;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2::after{content:"";flex:1 1 40px;height:2px;background:linear-gradient(90deg,var(--gold),transparent);align-self:center}
+h2 small{font-weight:400;color:var(--ink-2);font-size:12px}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.kpi-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:600}
+.kpi-v{font-size:28px;font-weight:700;line-height:1.1}
+.kpi-v .of{font-size:14px;font-weight:500;color:var(--ink-2)}
+.kpi-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+
+/* status chip */
+.st{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.st::before{font-size:10px}
+.st.good{background:var(--good-bg);color:var(--good)} .st.good::before{content:"▲"}
+.st.warn{background:var(--warn-bg);color:var(--warn)} .st.warn::before{content:"●"}
+.st.bad{background:var(--bad-bg);color:var(--bad)}  .st.bad::before{content:"▼"}
+.st.wait{background:var(--surface-2);color:var(--ink-2);border:1px dashed var(--line)} .st.wait::before{content:"◷"}
+
+/* progress meter */
+.meter{position:relative;height:8px;background:var(--track);border-radius:4px;overflow:visible}
+.meter i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--bar)}
+.meter i.over{background:linear-gradient(90deg,var(--bar) 0 var(--cut),var(--gold) var(--cut))}
+.meter b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);border-radius:1px}
+
+/* project scorecards */
+.projects{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.card-h h3{margin:0;font-size:17px}
+.card-h .tag{font-size:12px;color:var(--ink-2)}
+.rows{padding:6px 18px 14px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border-bottom:0}
+.row .lab{font-weight:600}
+.row .lab small{display:block;font-weight:400;color:var(--ink-2);font-size:12px}
+.row .val{text-align:right;font-size:13px;color:var(--ink-2)} .row .val strong{color:var(--ink);font-size:16px}
+.row .meter{grid-column:1/-1}
+.row .foot{grid-column:1/-1;display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2)}
+.insight{margin:0 18px 16px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.insight strong{color:var(--ink)}
+
+/* channel chart */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin-bottom:10px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+.ch{display:grid;grid-template-columns:minmax(90px,150px) minmax(0,1fr) 64px;gap:8px 12px;align-items:center}
+.ch .nm{font-size:13px;font-weight:600}
+.ch .pct{text-align:right;font-size:12px}
+.bars{position:relative;display:flex;flex-direction:column;gap:2px;padding-block:4px;cursor:default}
+.bars .t,.bars .a{height:12px;border-radius:0 4px 4px 0;min-width:2px}
+.bars .t{background:var(--bar-target)} .bars .a{background:var(--bar)}
+.bars .lbl{position:absolute;font-size:11px;color:var(--ink-2);white-space:nowrap}
+.axis{grid-column:2;display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:3px}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;padding:6px 9px;border-radius:6px;z-index:10;white-space:nowrap}
+
+/* tables */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
+th{background:var(--navy);color:#fff;font-weight:600;text-align:left;padding:8px 10px;font-size:12px}
+th.n,td.n{text-align:right}
+td{padding:8px 10px;border-bottom:1px solid var(--line)}
+tbody tr:nth-child(even) td{background:var(--surface-2)}
+tfoot td{font-weight:700;border-top:2px solid var(--gold)}
+.muted{color:var(--ink-3)}
+
+/* notes */
+.note{background:var(--note-bg);border:1px solid var(--note-line);color:var(--note-ink);border-radius:12px;padding:14px 18px}
+.note h2{color:var(--note-ink)} .note h2::after{background:linear-gradient(90deg,var(--note-line),transparent)}
+.note ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.note code{font-family:Consolas,monospace;font-size:12px;background:rgba(0,0,0,.05);padding:0 4px;border-radius:3px}
+.foot-line{font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+@media (max-width:520px){
+  .ch{grid-template-columns:84px minmax(0,1fr) 48px}
+  .kpi-v{font-size:24px}
+}
+</style>
+
+<div class="wrap">
+  <header class="band">
+    <div style="position:relative;z-index:1">
+      <div class="eyebrow">Steering Committee · October 2026</div>
+      <h1>Sales &amp; Collection <span>Scorecard</span></h1>
+      <div class="sub">Alcove Sangam &amp; The Curve, consolidated target vs achievement</div>
+    </div>
+    <div class="pills">
+      <span class="pill">Reviewed: September 2026</span>
+      <span class="pill g">Targets: October 2026</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>September 2026 at a glance <small>Status rule from the Excel: ≥90% On Track · ≥50% Watch · below 50% Behind</small></h2>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section>
+    <h2>Project scorecards: September 2026</h2>
+    <div class="projects" id="projects"></div>
+  </section>
+
+  <section class="two">
+    <div class="panel">
+      <h2>Sangam bookings by channel <small>Sep 2026, units</small></h2>
+      <div class="legend"><span><i class="sw" style="background:var(--bar-target)"></i>Target</span><span><i class="sw" style="background:var(--bar)"></i>Actual</span></div>
+      <div class="ch" id="channels"></div>
+    </div>
+    <div class="panel">
+      <h2>October 2026 targets <small>Actuals due 31 Oct 2026</small></h2>
+      <div class="tw"><table id="oct"></table></div>
+      <h2 style="margin-top:18px">Sangam channel targets <small>Oct 2026, units</small></h2>
+      <div class="tw"><table id="octch"></table></div>
+    </div>
+  </section>
+
+  <section class="note">
+    <h2>Fix these in the Excel before the meeting</h2>
+    <ol>
+      <li><strong>Sangam site-visit target differs.</strong> Dashboard sheet shows <code>275</code>; the Sangam - Sales sheet works it out as 55 ÷ 22% = <code>250</code>. This page uses 250 (54.8%, Watch). At 275 it would be 49.8% and turn Behind.</li>
+      <li><strong>The Curve collection shows <code>#VALUE!</code></strong> on the Dashboard (D11) because the target was typed as text ("6.75 Cr"). Enter it as the number 6.75.</li>
+      <li><strong>"Results awaited" dates are wrong.</strong> Sangam - Sales F6/G6 say "31-Sept-2026" (no such date), Dashboard I15 says 30-Sep-2026 and I16 says 30-Sep-2027. October actuals are due 31-Oct-2026.</li>
+      <li><strong>Label says July.</strong> Sangam - Sales A8 reads "Unit Sales Achievement % (Jul)" but calculates September.</li>
+      <li><strong>The Curve October revenue target is "100 CR" for 2 units.</strong> Please confirm; it is shown as given.</li>
+      <li><strong>October channel rows show <code>#VALUE!</code></strong> because actuals are entered as "-". Leave the cells blank or wrap the formula in <code>IFERROR</code>.</li>
+    </ol>
+  </section>
+
+  <div class="foot-line">
+    <span>Source: Sangam, Curve Consolidated Target vs Achievement Sales and Collection OCTOBER 2026.xlsx (Dashboard, Sangam - Sales, Collection sheets)</span>
+    <span>Alcove Realty Pvt. Ltd. · Confidential, internal use</span>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+/* ===== DATA: update these figures each month ===== */
+const DATA = {
+  sangam: {
+    units:{t:55, a:26}, visits:{t:250, a:137}, revenue:{t:34.65, a:17.88},
+    collection:{t:17.68, a:19.43}, convPlan:0.22,
+    channels:[
+      {n:"Pre-Sales", t:21, a:5}, {n:"CP Booking", t:15, a:15},
+      {n:"Referrals", t:12, a:4}, {n:"Walk-in & Direct", t:7, a:2}
+    ]
+  },
+  curve: { units:{t:2, a:0}, collection:{t:6.75, a:0} },
+  oct: {
+    rows:[
+      {p:"Alcove Sangam", units:45, rev:"₹28.35 Cr", col:"₹17.73 Cr", sv:205, conv:"22%"},
+      {p:"The Curve", units:2, rev:"₹100 Cr*", col:"₹6.75 Cr", sv:"TBD", conv:"TBD"}
+    ],
+    channels:[{n:"Pre-Sales",t:17},{n:"CP Booking",t:13},{n:"Referrals",t:10},{n:"Walk-in & Direct",t:5}]
+  }
+};
+
+/* ===== helpers ===== */
+const pct = (a,t) => t ? a/t : 0;
+const fp = v => (v*100).toFixed(1) + "%";
+const cr = v => "₹" + v.toFixed(2) + " Cr";
+const status = p => p>=0.9 ? ["good","On Track"] : p>=0.5 ? ["warn","Watch"] : ["bad","Behind"];
+const chip = p => { const [c,l]=status(p); return `<span class="st ${c}">${l}</span>`; };
+function meter(a,t){
+  const p = pct(a,t), max = Math.max(1,p);
+  const w = (p/max)*100, mark = (1/max)*100;
+  const over = p>1 ? ` class="over" style="width:${w}%;--cut:${(1/p)*100}%"` : ` style="width:${w}%"`;
+  return `<div class="meter" role="img" aria-label="${fp(p)} of target"><i${over}></i>${p>1?`<b style="left:calc(${mark}% - 1px)"></b>`:""}</div>`;
+}
+const S = DATA.sangam, C = DATA.curve;
+
+/* ===== KPI strip ===== */
+const colT = S.collection.t + C.collection.t, colA = S.collection.a + C.collection.a;
+const kpis = [
+  {l:"Sangam units sold", v:`${S.units.a}<span class="of"> / ${S.units.t}</span>`, p:pct(S.units.a,S.units.t)},
+  {l:"Sangam revenue booked", v:`₹${S.revenue.a.toFixed(2)}<span class="of"> / ${S.revenue.t} Cr</span>`, p:pct(S.revenue.a,S.revenue.t)},
+  {l:"Sangam collection", v:`₹${S.collection.a.toFixed(2)}<span class="of"> / ${S.collection.t} Cr</span>`, p:pct(S.collection.a,S.collection.t)},
+  {l:"Consolidated collection", v:`₹${colA.toFixed(2)}<span class="of"> / ${colT.toFixed(2)} Cr</span>`, p:pct(colA,colT)},
+];
+document.getElementById("kpis").innerHTML = kpis.map(k=>`
+  <div class="kpi"><div class="kpi-l">${k.l}</div><div class="kpi-v">${k.v}</div>
+  ${meter(k.p,1)}
+  <div class="kpi-f"><span class="num">${fp(k.p)} of target</span>${chip(k.p)}</div></div>`).join("");
+
+/* ===== project scorecards ===== */
+function row(label, sub, a, t, fmt, extra=""){
+  const p = pct(a,t);
+  return `<div class="row"><div class="lab">${label}${sub?`<small>${sub}</small>`:""}</div>
+    <div class="val num"><strong>${fmt(a)}</strong> / ${fmt(t)}</div>
+    ${meter(a,t)}
+    <div class="foot"><span class="num">${fp(p)} achieved${extra}</span>${chip(p)}</div></div>`;
+}
+const units = v => v + " units", n = v => String(v);
+const convAct = pct(S.units.a, S.visits.a);
+const tktAct = S.revenue.a / S.units.a;
+const sangamCard = `
+<article class="card">
+  <div class="card-h"><div><h3>Alcove Sangam</h3><div class="tag">Residential · New Kolkata</div></div>${chip(pct(S.units.a,S.units.t))}</div>
+  <div class="rows">
+    ${row("Unit sales","AOP booking target", S.units.a, S.units.t, units)}
+    ${row("Site visits","Plan = units ÷ 22% conversion", S.visits.a, S.visits.t, n)}
+    ${row("Revenue booked","₹ Cr", S.revenue.a, S.revenue.t, cr)}
+    ${row("Collection","₹ Cr", S.collection.a, S.collection.t, cr, ` · ${cr(S.collection.a-S.collection.t)} above target`)}
+  </div>
+  <div class="insight">Site-visit to booking conversion was <strong>${fp(convAct)}</strong> against the 22% plan.
+  Revenue achievement (${fp(pct(S.revenue.a,S.revenue.t))}) ran ahead of units (${fp(pct(S.units.a,S.units.t))})
+  because realised value per unit was <strong>${cr(tktAct)}</strong> against the ₹0.63 Cr plan.</div>
+</article>`;
+const curveCard = `
+<article class="card">
+  <div class="card-h"><div><h3>The Curve</h3><div class="tag">Site visits &amp; revenue targets not set</div></div>${chip(0)}</div>
+  <div class="rows">
+    ${row("Unit sales","Booking target", C.units.a, C.units.t, units)}
+    ${row("Collection","₹ Cr · recorded as NIL", C.collection.a, C.collection.t, cr, ` · ${cr(C.collection.t)} shortfall`)}
+  </div>
+  <div class="insight">No bookings or collections were recorded against The Curve in September.
+  The same targets carry into October (2 units, <strong>${cr(C.collection.t)}</strong> collection), so the
+  ${cr(C.collection.t)} shortfall pulls consolidated collection down to <strong>${fp(pct(colA,colT))}</strong>.</div>
+</article>`;
+document.getElementById("projects").innerHTML = sangamCard + curveCard;
+
+/* ===== channel chart ===== */
+const chMax = 25;
+const chEl = document.getElementById("channels");
+chEl.innerHTML = S.channels.map(c=>{
+  const p = pct(c.a,c.t), [cls] = status(p);
+  return `<div class="nm">${c.n}</div>
+  <div class="bars" data-tip="${c.n}: ${c.a} of ${c.t} booked (${fp(p)})">
+    <div class="t" style="width:${c.t/chMax*100}%"></div>
+    <div class="a" style="width:${c.a/chMax*100}%"></div>
+    <span class="lbl" style="left:calc(${c.t/chMax*100}% + 6px);top:2px">${c.t}</span>
+    <span class="lbl" style="left:calc(${c.a/chMax*100}% + 6px);top:16px;color:var(--ink);font-weight:600">${c.a}</span>
+  </div>
+  <div class="pct num"><span class="st ${cls}">${fp(p).replace(".0%","%")}</span></div>`;
+}).join("") + `<div class="axis">${[0,5,10,15,20,25].map(v=>`<span>${v}</span>`).join("")}</div>`;
+const tot = S.channels.reduce((s,c)=>({t:s.t+c.t,a:s.a+c.a}),{t:0,a:0});
+chEl.insertAdjacentHTML("afterend", `<p class="muted" style="font-size:12px;margin:12px 0 0">Total ${tot.a} of ${tot.t} bookings (${fp(pct(tot.a,tot.t))}). CP bookings hit target; Pre-Sales delivered ${S.channels[0].a} of ${S.channels[0].t}, the largest gap at ${S.channels[0].t-S.channels[0].a} units.</p>`);
+
+/* ===== October tables ===== */
+document.getElementById("oct").innerHTML = `
+<thead><tr><th>Project</th><th class="n">Units</th><th class="n">Revenue</th><th class="n">Collection</th><th class="n">Site visits</th><th class="n">Conv.</th><th>Status</th></tr></thead>
+<tbody>${DATA.oct.rows.map(r=>`<tr><td>${r.p}</td><td class="n">${r.units}</td><td class="n">${r.rev}</td><td class="n">${r.col}</td><td class="n">${r.sv}</td><td class="n">${r.conv}</td><td><span class="st wait">Awaited</span></td></tr>`).join("")}</tbody>
+<tfoot><tr><td>Total</td><td class="n">${DATA.oct.rows.reduce((s,r)=>s+r.units,0)}</td><td class="n muted">–</td><td class="n">₹24.48 Cr</td><td class="n muted">–</td><td></td><td></td></tr></tfoot>`;
+document.getElementById("oct").insertAdjacentHTML("afterend",`<p class="muted" style="font-size:12px;margin:6px 0 0">* As entered in the Excel; please confirm (see note 5).</p>`);
+const octTot = DATA.oct.channels.reduce((s,c)=>s+c.t,0);
+document.getElementById("octch").innerHTML = `
+<thead><tr><th>Channel</th><th class="n">Target</th><th class="n">Sep actual</th><th class="n">Change vs Sep target</th></tr></thead>
+<tbody>${DATA.oct.channels.map((c,i)=>{const s=S.channels[i];return `<tr><td>${c.n}</td><td class="n">${c.t}</td><td class="n">${s.a}</td><td class="n">${c.t-s.t}</td></tr>`}).join("")}</tbody>
+<tfoot><tr><td>Total</td><td class="n">${octTot}</td><td class="n">${tot.a}</td><td class="n">${octTot-tot.t}</td></tr></tfoot>`;
+
+/* ===== tooltip ===== */
+const tip = document.getElementById("tip");
+document.querySelectorAll("[data-tip]").forEach(el=>{
+  el.addEventListener("mousemove",e=>{tip.textContent=el.dataset.tip;tip.hidden=false;tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY-30)+"px";});
+  el.addEventListener("mouseleave",()=>tip.hidden=true);
+});
+</script>
+
+</body>
+</html>
